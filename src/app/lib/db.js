@@ -2,10 +2,10 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
   user: 'admin',
-  host: '192.168.33.10',
+  host: '192.168.49.2',
   database: 'db',
   password: 'root',
-  port: 5432
+  port: 30432
 });
 
 export const query = async (text, params) => {
