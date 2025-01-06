@@ -5,5 +5,6 @@ FROM node:22-alpine AS base
 WORKDIR /usr/app
 COPY ./ /usr/app
 RUN npm install
+RUN npm build
 
-CMD [ "npm", "run", "dev" ]
+CMD [ "npm", "run", "start" ]
