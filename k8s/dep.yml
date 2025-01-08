@@ -6,6 +6,7 @@ metadata:
   labels:
     app: nextjs-app
 spec:
+  replicas: 1  # Adjust the number of replicas as needed
   selector:
     matchLabels:
       app: nextjs-app
@@ -21,19 +22,6 @@ spec:
         - containerPort: 3000  # Default Next.js port
       restartPolicy: Always
 ---
-apiVersion: autoscaling/v1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: nextjs-app
-  minReplicas: 1
-  maxReplicas: 2
-  targetCPUUtilizationPercentage: 72
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -48,5 +36,5 @@ spec:
   ports:
   - protocol: TCP
     port: 3000
-    targetPort: 3000
-    NodePort: 30001  # Forward to the container's port
+    targetPort: 3000  # Forward to the container's port
+    nodePort: 30001
