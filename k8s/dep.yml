@@ -1,12 +1,13 @@
+# Next.js Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nextjs-deployment
-  namespace: default  # Replace with your namespace if needed
+  namespace: default
   labels:
     app: nextjs-app
 spec:
-  replicas: 1  # Adjust the number of replicas as needed
+  replicas: 1
   selector:
     matchLabels:
       app: nextjs-app
@@ -17,24 +18,133 @@ spec:
     spec:
       containers:
       - name: nextjs-container
-        image: dshapova/next-runner:latest  # Replace with your container image
+        image: dshapova/next-runner:latest
         ports:
-        - containerPort: 3000  # Default Next.js port
+        - containerPort: 3000
       restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: nextjs-service
-  namespace: default  # Replace with your namespace if needed
+  namespace: default
   labels:
     app: nextjs-app
 spec:
-  type: NodePort  # Use LoadBalancer, NodePort, or ClusterIP depending on your needs
+  type: NodePort
   selector:
     app: nextjs-app
   ports:
   - protocol: TCP
     port: 3000
-    targetPort: 3000  # Forward to the container's port
+    targetPort: 3000
     nodePort: 30001
+
+# Prometheus Node Exporter Deployment (for node metrics)
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:latest
+        ports:
+        - containerPort: 9100
+          name: metrics
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+
+# Kube State Metrics Deployment (for Kubernetes metrics)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app: kube-state-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app: kube-state-metrics
+    spec:
+      containers:
+      - name: kube-state-metrics
+        image: k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.9.2
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+
+# Grafana Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: admin  # Replace with a strong password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  type: NodePort
+  ports:
+  - port: 3000
+    targetPort: 3000
+    nodePort: 32000
+  selector:
+    app: grafana
